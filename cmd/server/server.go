@@ -5,6 +5,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/ewinsutriandi/iotlogger"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
@@ -12,15 +13,14 @@ import (
 func login(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
-
-	if username == "jon" && password == "shhh!" {
+	isvaliduser := iotlogger.Authenticate(username, password)
+	if isvaliduser {
 		// Create token
 		token := jwt.New(jwt.SigningMethodHS256)
 
 		// Set claims
 		claims := token.Claims.(jwt.MapClaims)
-		claims["name"] = "Jon Snow"
-		claims["admin"] = true
+		claims["name"] = username
 		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
 		// Generate encoded token and send it as response.
