@@ -21,7 +21,8 @@ func encrypt(pass string, salt []byte) ([]byte, error) {
 	return dk, err
 }
 
-func authenticate(username, pass string) bool {
+//Authenticate user
+func Authenticate(username, pass string) bool {
 	//savedPass = get []byte from db
 	auth := false
 	savedPass, salt := getPassSalt(username)
