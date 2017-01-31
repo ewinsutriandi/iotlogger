@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/rand"
 
+	"errors"
+
 	"golang.org/x/crypto/scrypt"
 )
 
@@ -13,6 +15,7 @@ func generateRandomSalt(n int) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	HandleError(err)
 	return b, nil
 }
 
@@ -21,30 +24,37 @@ func encrypt(pass string, salt []byte) ([]byte, error) {
 	return dk, err
 }
 
-//Authenticate user
+//Authenticate user using username and password
 func Authenticate(username, pass string) bool {
 	//savedPass = get []byte from db
-	auth := false
-	savedPass, salt := getPassSalt(username)
-	key, err := encrypt(pass, salt)
+	savedPass, salt, err := getPassSalt(username)
 	if err == nil {
-		i := bytes.Compare(savedPass, key)
-		if i == 0 {
-			auth = true
+		key, err := encrypt(pass, salt)
+		if err == nil {
+			i := bytes.Compare(savedPass, key)
+			if i == 0 {
+				return true
+			}
 		}
 	}
-	return auth
+	HandleError(err)
+	return false
 }
 
-func getPassSalt(username string) ([]byte, []byte) {
-	//get pass & salt from db where username = user
+//get pass & salt from db for user username
+func getPassSalt(username string) ([]byte, []byte, error) {
 	var err error
 	ctl, err := NewController()
 	if err == nil {
-		User, err := ctl.GetUser(username)
+		user, err := ctl.GetUser(username)
 		if err == nil {
-			return []byte(User.Password), []byte(User.Salt)
+			if IsEmpty(user) {
+				err = errors.New("User with specified username is not found")
+			} else {
+				return []byte(user.Password), []byte(user.Salt), nil
+			}
 		}
 	}
-	panic(err)
+	HandleError(err)
+	return nil, nil, err
 }
