@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 
+	"strconv"
+
 	"github.com/ewinsutriandi/iotlogger"
 )
 
@@ -14,10 +16,12 @@ func main() {
 	if len(os.Args) >= 2 {
 		command := os.Args[1]
 		switch command {
-		case "add":
+		case "adduser":
 			err = addUser(os.Args)
-		case "check":
+		case "checkuser":
 			err = checkUser(os.Args)
+		case "addtelem":
+			err = addTelem(os.Args)
 		default:
 			err = errors.New("Unknown command")
 		}
@@ -31,8 +35,8 @@ func addUser(args []string) (err error) {
 	ctl, err := iotlogger.NewController()
 	if err == nil {
 		if len(os.Args) == 4 {
-			username := os.Args[1]
-			password := os.Args[2]
+			username := os.Args[2]
+			password := os.Args[3]
 			err = ctl.AddUser(username, password)
 		} else {
 			err = errors.New("Usage :user add [username] [password]")
@@ -53,6 +57,32 @@ func checkUser(args []string) (err error) {
 			}
 		} else {
 			err = errors.New("Usage :user check [username]")
+		}
+	}
+	return
+}
+func addTelem(args []string) (err error) {
+	ctl, err := iotlogger.NewController()
+	if err == nil {
+		if len(os.Args) == 5 {
+
+			metric := os.Args[2]
+			svalue := os.Args[3]
+			value, err := strconv.ParseFloat(svalue, 64)
+			if err != nil {
+				err = errors.New("invalid value, use number as value")
+				return err
+			}
+			unit := os.Args[4]
+			telem := iotlogger.NewTelemetryReport(
+				"127.0.0.1",
+				"local test",
+				metric,
+				unit, value)
+			ctl.AddTelemetryReport(*telem)
+
+		} else {
+			err = errors.New("Usage :user addtelem [metric] [value] [unit]")
 		}
 	}
 	return
